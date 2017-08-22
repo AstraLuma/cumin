@@ -10,11 +10,7 @@ import logging
 from pepper.cli import PepperCli
 from pepper import PepperException
 
-try:
-    from logging import NullHandler
-except ImportError: # Python < 2.7
-    class NullHandler(logging.Handler):
-        def emit(self, record): pass
+from logging import NullHandler
 
 logging.basicConfig(format='%(levelname)s %(asctime)s %(module)s: %(message)s')
 logger = logging.getLogger('pepper')
@@ -26,16 +22,9 @@ if __name__ == '__main__':
         for exit_code, result in cli.run():
             print(result)
             if exit_code is not None:
-                raise SystemExit(exit_code)
+                sys.exit(exit_code)
     except PepperException as exc:
-        print('Pepper error: {0}'.format(exc), file=sys.stderr)
-        raise SystemExit(1)
-    except KeyboardInterrupt:
-        # TODO: mimic CLI and output JID on ctrl-c
-        raise SystemExit(0)
+        sys.exit('Pepper error: {0}'.format(exc))
     except Exception as e:
-        print(e)
-        print('Uncaught Pepper error (increase verbosity for the full traceback).',
-                file=sys.stderr)
         logger.debug('Uncaught traceback:', exc_info=True)
-        raise SystemExit(1)
+        raise

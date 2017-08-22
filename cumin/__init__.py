@@ -5,7 +5,7 @@ Pepper is a CLI front-end to salt-api
 import json
 import os
 
-from pepper.libpepper import Pepper, PepperException
+from .libpepper import Pepper, PepperException
 
 __all__ = ('__version__', '__gitrev__', 'Pepper', 'PepperException')
 

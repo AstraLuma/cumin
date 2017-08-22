@@ -7,12 +7,11 @@ import json
 import os
 import re
 
-from distutils.core import setup
-from distutils.dist import Distribution
+from setuptools import setup
 from distutils.command import sdist, install_data
 
 setup_kwargs = {
-    'name': 'salt-pepper',
+    'name': 'salt-cumin',
     'description': __doc__,
     'author': 'Seth House',
     'author_email': 'shouse@saltstack.com',
@@ -20,8 +19,8 @@ setup_kwargs = {
     'classifiers': [
         'Programming Language :: Python',
         'Programming Language :: Cython',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
@@ -33,15 +32,29 @@ setup_kwargs = {
         'Topic :: System :: Distributed Computing',
     ],
     'packages': [
-        'pepper',
+        'cumin',
     ],
     'package_data': {
-        'pepper': ['version.json'],
+        'cumin': ['version.json'],
     },
-    'scripts': [
-        'scripts/pepper',
-    ]
+    'entry_points': {
+        'console_scripts': [
+            'cumin = cumin.__main__'
+        ]
+    },
+    'install_requires': [
+        'requests',
+        'six',
+    ],
+    'extras_require': {
+        'kerberos': ['requests_kerberos'],
+    },
 }
+
+
+def versionfile(base_dir):
+    return os.path.join(base_dir, 'cumin', 'version.json')
+
 
 def read_version_tag():
     git_dir = os.path.join(os.path.dirname(__file__), '.git')
@@ -51,7 +64,7 @@ def read_version_tag():
 
         try:
             p = subprocess.Popen(['git', 'describe'],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
         except Exception:
             pass
@@ -63,9 +76,11 @@ def read_version_tag():
 
     return None
 
+
 def read_version_from_json_file():
-    with open(os.path.join(os.path.dirname(__file__), "pepper", "version.json")) as f:
+    with open(versionfile(os.path.dirname(__file__))) as f:
         return json.load(f)['version']
+
 
 def parse_version_tag(tag):
     '''
@@ -90,6 +105,7 @@ def parse_version_tag(tag):
         match_dict.get('num_commits'),
         match_dict.get('sha'))
 
+
 def get_version():
     '''
     Return a tuple of the version and Git SHA
@@ -99,31 +115,37 @@ def get_version():
         version = '{0}.dev{1}'.format(version, num_commits)
     return version, sha
 
+
 def write_version_file(base_dir):
-    ver_path = os.path.join(base_dir, 'pepper', 'version.json')
+    ver_path = versionfile(base_dir)
     version, sha = get_version()
 
     with open(ver_path, 'wb') as f:
         json.dump({'version': version, 'sha': sha}, f)
 
+
 class PepperSdist(sdist.sdist):
     '''
     Write the version.json file to the sdist tarball build directory
     '''
+
     def make_release_tree(self, base_dir, files):
         sdist.sdist.make_release_tree(self, base_dir, files)
         write_version_file(base_dir)
+
 
 class PepperInstallData(install_data.install_data):
     '''
     Write the version.json file to the installation directory
     '''
+
     def run(self):
         install_cmd = self.get_finalized_command('install')
         install_dir = getattr(install_cmd, 'install_lib')
         write_version_file(install_dir)
 
         return install_data.install_data.run(self)
+
 
 if __name__ == '__main__':
     version, sha = get_version()

@@ -233,10 +233,11 @@ class SaltApi(object):
         * password
         * eauth
         """
-        resp = self._mkrequest('post', '/keys', {
+        form = {
             'mid': mid,
-            **kwargs
-        })
+        }
+        form.update(kwargs)
+        resp = self._mkrequest('post', '/keys', form)
         buf = io.BytesIO(resp.binary)
         return tarfile.open(fileobj=buf, mode='r')
 

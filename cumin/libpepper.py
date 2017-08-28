@@ -10,7 +10,6 @@ from six.moves.urllib import parse as urlparse
 import requests
 import tarfile
 import io
-from functools import partial
 from .sse import stream_sse
 
 logger = logging.getLogger('pepper')
@@ -194,8 +193,7 @@ class SaltApi(object):
 
         :param list cmds: a list of command dictionaries
         '''
-        body = self._mkrequest('post', '/run', cmds).json()
-        return body
+        return self._mkrequest('post', '/run', cmds).json()
 
     def minions(self, mid):
         if mid is ...:
@@ -265,6 +263,6 @@ class SaltApi(object):
             }
 
         """
-        for msg in stream_sse(partial(self._mkrequest, 'get')):
+        for msg in stream_sse(self._mkrequest, 'get', '/events'):
             data = json.loads(msg['data'])
             yield data

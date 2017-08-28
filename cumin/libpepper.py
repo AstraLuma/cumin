@@ -8,6 +8,8 @@ import json
 import logging
 from six.moves.urllib import parse as urlparse
 import requests
+import tarfile
+import io
 from functools import partial
 from .sse import stream_sse
 
@@ -52,7 +54,7 @@ class SaltApi(object):
     A thin wrapper for making HTTP calls to the salt-api rest_cherrpy REST
     interface
 
-    >>> api = Pepper('https://localhost:8000')
+    >>> api = SaltApi('https://localhost:8000')
     >>> api.login('saltdev', 'saltdev', 'pam')
     {"return": [
             {
@@ -67,7 +69,7 @@ class SaltApi(object):
             }
         ]
     }
-    >>> api.low([{'client': 'local', 'tgt': '*', 'fun': 'test.ping'}])
+    >>> api.run([{'client': 'local', 'tgt': '*', 'fun': 'test.ping'}])
     {u'return': [{u'ms-0': True,
               u'ms-1': True,
               u'ms-2': True,
@@ -182,7 +184,8 @@ class SaltApi(object):
 
     def unsessioned_run(self, cmds, **kwargs):
         '''
-        Execute a command through salt-api and return the response
+        Execute a command through salt-api and return the response, bypassing
+        the usual session mechanisms.
 
         Additional keyword arguments should be what's necessary for eauth. It's
         probably either:
@@ -194,7 +197,50 @@ class SaltApi(object):
         body = self._mkrequest('post', '/run', cmds).json()
         return body
 
-    # TODO: minions, jobs, keys collections
+    def minions(self, mid):
+        if mid is ...:
+            path = '/minions'
+        else:
+            path = urlparse.urljoin('/minions', mid)
+        return self._mkrequest('get', path).json()
+
+    # POST /minions?
+
+    def jobs(self, jid):
+        if jid is ...:
+            path = '/jobs'
+        else:
+            path = urlparse.urljoin('/jobs', jid)
+        return self._mkrequest('get', path).json()
+
+    def keys(self, mid):
+        if mid is ...:
+            path = '/keys'
+        else:
+            path = urlparse.urljoin('/keys', mid)
+        return self._mkrequest('get', path).json()
+
+    def key_gen(self, mid, **kwargs):
+        """
+        * mid: The name of the minion for which to generate a key pair.
+        * keysize: The size of the key pair to generate. The size must be 2048,
+          which is the default, or greater. If set to a value less than 2048,
+          the key size will be rounded up to 2048.
+        * force: If a public key has already been accepted for the given minion
+          on the master, then the gen_accept function will return an empty
+          dictionary and not create a new key. This is the default behavior. If
+          force is set to True, then the minion's previously accepted key will
+          be overwritten.
+        * username
+        * password
+        * eauth
+        """
+        resp = self._mkrequest('post', '/keys', {
+            'mid': mid,
+            **kwargs
+        })
+        buf = io.BytesIO(resp.binary)
+        return tarfile.open(fileobj=buf, mode='r')
 
     def hook(self, path, body):
         hookpath = urlparse.urljoin('/hook', path)
@@ -219,7 +265,6 @@ class SaltApi(object):
             }
 
         """
-        # This is ripped from pepper, and doesn't support kerb to boot
         for msg in stream_sse(partial(self._mkrequest, 'get')):
             data = json.loads(msg['data'])
             yield data

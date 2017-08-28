@@ -5,9 +5,12 @@ Pepper is a CLI front-end to salt-api
 import json
 import os
 
-from .libpepper import Pepper, PepperException
+from .api import SaltApi, PepperException, AuthenticationDenied, ServerError
 
-__all__ = ('__version__', '__gitrev__', 'Pepper', 'PepperException')
+__all__ = (
+    '__version__', '__gitrev__', 'SaltApi', 'PepperException', 'AuthenticationDenied',
+    'ServerError',
+)
 
 try:
     # First try to grab the version from the version.json build file.
@@ -32,3 +35,4 @@ except IOError:
 
 __version__ = version or 'Unknown'
 __gitrev__ = sha
+del version, sha

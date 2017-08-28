@@ -30,12 +30,6 @@ class PepperException(Exception):
     pass
 
 
-class MissingLogin(PepperException):
-    """
-    Authentication required
-    """
-
-
 class AuthenticationDenied(PepperException):
     """
     401:Authentication denied

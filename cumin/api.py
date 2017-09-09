@@ -150,7 +150,6 @@ class SaltApi(object):
         elif resp.status_code == 500:
             raise ServerError
         else:
-            print(resp, resp.headers)
             return resp
 
     def run(self, cmds):
@@ -167,12 +166,12 @@ class SaltApi(object):
             'username': username,
             'password': password,
             'eauth': eauth,
-        })
-        self.auth = body['return']
+        }).json()
+        self.auth = body['return'][0]
         return self.auth
 
     def logout(self):
-        self._mkrequest('post', '/logout')
+        self._mkrequest('post', '/logout').json()
         self.auth = {}
 
     def unsessioned_run(self, cmds, **kwargs):

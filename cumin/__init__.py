@@ -6,10 +6,11 @@ import json
 import os
 
 from .api import SaltApi, PepperException, AuthenticationDenied, ServerError
+from .client import Client
 
 __all__ = (
-    '__version__', '__gitrev__', 'SaltApi', 'PepperException', 'AuthenticationDenied',
-    'ServerError',
+    '__version__', '__gitrev__', 'SaltApi', 'PepperException',
+    'AuthenticationDenied', 'ServerError', 'Client',
 )
 
 try:

@@ -22,7 +22,7 @@ class Client:
     def events(self):
         yield from self.api.events()
 
-    def local(self, tgt, fun, arg=None, kwarg=None, expr_form='glob',
+    def local(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
               timeout=None, ret=None):
         """
         Run a single execution function on one or more minions and wait for the
@@ -34,12 +34,12 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            expr_form=expr_form,
+            tgt_type=tgt_type,
             timeout=timeout,
             ret=ret,
         )])['return'][0]
 
-    def local_async(self, tgt, fun, arg=None, kwarg=None, expr_form='glob',
+    def local_async(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     timeout=None, ret=None):
         """
         Run a single execution function on one or more minions and a callable to
@@ -51,7 +51,7 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            expr_form=expr_form,
+            tgt_type=tgt_type,
             timeout=timeout,
             ret=ret,
         )])
@@ -59,7 +59,7 @@ class Client:
         # TODO: Do anything with the minions?
         return partial(self.api.jobs, jid)
 
-    def local_batch(self, tgt, fun, arg=None, kwarg=None, expr_form='glob',
+    def local_batch(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     batch='50%', ret=None):
         """
         Run a single execution function on one or more minions in staged batches,
@@ -71,7 +71,7 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            expr_form=expr_form,
+            tgt_type=tgt_type,
             batch=batch,
             ret=ret,
         )])['return']:

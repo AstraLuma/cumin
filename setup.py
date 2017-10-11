@@ -12,7 +12,7 @@ from distutils.command import sdist, install_data
 
 setup_kwargs = {
     'name': 'salt-cumin',
-    'description': __doc__,
+    'description': __doc__.strip(),
     'author': 'Seth House',
     'author_email': 'shouse@saltstack.com',
     'url': 'http://saltstack.com',

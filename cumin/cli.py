@@ -12,7 +12,8 @@ import time
 from six.moves.configparser import ConfigParser, RawConfigParser
 from six.moves import input
 
-import pepper
+from .client import Client
+from . import __version__
 
 logger = logging.getLogger('pepper')
 
@@ -31,7 +32,7 @@ class PepperCli(object):
         return optparse.OptionParser(
             description=__doc__,
             usage='%prog [opts]',
-            version=pepper.__version__)
+            version=__version__)
 
     def parse(self):
         '''
@@ -49,11 +50,6 @@ class PepperCli(object):
         self.parser.add_option(
             '-v', dest='verbose', default=0, action='count',
             help='Increment output verbosity; may be specified multiple times',
-        )
-
-        self.parser.add_option(
-            '-H', '--debug-http', dest='debug_http', default=False, action='store_true',
-            help='Output the HTTP request/response headers on stderr',
         )
 
         self.parser.add_option(
@@ -419,9 +415,8 @@ class PepperCli(object):
 
         load = self.parse_cmd()
 
-        api = pepper.Pepper(
+        api = Client(
             self.parse_url(),
-            debug_http=self.options.debug_http,
             ignore_ssl_errors=self.options.ignore_ssl_certificate_errors)
         if self.options.mktoken:
             token_file = os.path.join(os.path.expanduser('~'), '.peppercache')

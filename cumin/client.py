@@ -56,7 +56,7 @@ class Client:
             ret=ret,
         )])
         jid = body['return'][0]['jid']
-        # TODO: Do anything with the minions?
+        # XXX: Do anything with the list minions?
         return partial(self.api.jobs, jid)
 
     def local_batch(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',

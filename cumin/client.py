@@ -3,6 +3,7 @@ A mid-level client to make executing commands easier.
 """
 from functools import partial
 from .api import SaltApi
+from .auth import PepperrcConfig, NullCache
 
 
 def _dict_filter_none(**kwarg):
@@ -10,7 +11,9 @@ def _dict_filter_none(**kwarg):
 
 
 class Client:
-    def __init__(self, api_url, ignore_ssl_errors=False):
+    def __init__(self, api_url, *, config=None, cache=None, ignore_ssl_errors=False):
+        self.config = config or PepperrcConfig()
+        self.cache = cache or NullCache(self.config)
         self.api = SaltApi(api_url, ignore_ssl_errors)
 
     def login(self, username, password, eauth):
@@ -42,8 +45,8 @@ class Client:
     def local_async(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     timeout=None, ret=None):
         """
-        Run a single execution function on one or more minions and a callable to
-        get the job status.
+        Run a single execution function on one or more minions and get a
+        callable to get the job status.
         """
         body = self.api.run([_dict_filter_none(
             client='local_async',

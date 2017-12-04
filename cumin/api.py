@@ -1,9 +1,6 @@
-'''
-A Python library for working with Salt's REST API
-
-(Specifically the rest_cherrypy netapi module.)
-
-'''
+"""
+A low-level API exposing the salt-api HTTP calls fairly directly.
+"""
 import json
 import logging
 from six.moves.urllib import parse as urlparse
@@ -80,13 +77,12 @@ class SaltApi(object):
 
         :param ignore_ssl_errors: Add a flag to urllib2 to ignore invalid SSL certificates
 
-        :raises PepperException: if the api_url is misformed
+        :raises ValueError: if the api_url is misformed
 
         '''
         split = urlparse.urlsplit(api_url)
         if split.scheme not in ['http', 'https']:
-            raise PepperException("salt-api URL missing HTTP(s) protocol: {0}"
-                                  .format(api_url))
+            raise ValueError("salt-api URL missing HTTP(s) protocol: {0}".format(api_url))
 
         self.api_url = api_url
         self._ssl_verify = not ignore_ssl_errors

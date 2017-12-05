@@ -124,19 +124,19 @@ def load_config_pepperrc(config, filename=None):
     """
 
     CONFIG_MAP = {
-        'SALTAPI_USER': 'user',
-        'SALTAPI_PASS': 'password',
-        'SALTAPI_EAUTH': 'eauth',
-        'SALTAPI_URL': 'url',
+        'saltapi_user': 'user',
+        'saltapi_pass': 'password',
+        'saltapi_eauth': 'eauth',
+        'saltapi_url': 'url',
     }
 
     if not filename:
         filename = os.path.expanduser('~/.pepperrc')
 
-    config = ConfigParser(interpolation=None)
-    config.read(filename)
-    if 'main' in config:
-        for k, v in config['main']:
+    cp = ConfigParser(interpolation=None)
+    cp.read(filename)
+    if 'main' in cp:
+        for k, v in cp['main'].items():
             if k in CONFIG_MAP:
                 config[CONFIG_MAP[k]] = v
 
@@ -156,7 +156,7 @@ def load_config_environ(config, environ=None):
     if environ is None:  # Don't overwrite {}
         environ = os.environ
 
-    for k, v in environ:
+    for k, v in environ.items():
         if k in CONFIG_MAP:
             config[CONFIG_MAP[k]] = v
 
@@ -189,6 +189,6 @@ def standard_configuration(*, pepperrc=None, environ=None):
     3. Hard-coded defaults
     """
     config = Config()
-    load_config_pepperrc(config)
-    load_config_environ(config)
+    load_config_pepperrc(config, pepperrc)
+    load_config_environ(config, environ)
     return config

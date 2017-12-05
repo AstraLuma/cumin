@@ -3,7 +3,7 @@ A mid-level client to make executing commands easier.
 """
 from functools import partial
 from .api import SaltApi
-from .auth import standard_configuration, NullCache
+from .config import standard_configuration, NullCache
 
 
 def _dict_filter_none(**kwarg):
@@ -70,8 +70,8 @@ class Client:
             ret=ret,
         )])
         jid = body['return'][0]['jid']
-        # XXX: Do anything with the list minions?
-        return partial(self.api.jobs, jid)
+        minions = body['return'][0]['minions']
+        return minions, (lambda: self.api.jobs(jid)['info'][0])
 
     def local_batch(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     batch='50%', ret=None):

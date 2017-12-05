@@ -4,10 +4,11 @@ A low-level API exposing the salt-api HTTP calls fairly directly.
 import json
 import logging
 from six.moves.urllib import parse as urlparse
+import posixpath as urlpath
 import requests
 import tarfile
 import io
-from .utils import NullCache
+from .config import NullCache
 from .sse import stream_sse
 
 logger = logging.getLogger('pepper')
@@ -195,7 +196,7 @@ class SaltApi(object):
         if mid is ...:
             path = '/minions'
         else:
-            path = urlparse.urljoin('/minions', mid)
+            path = urlpath.join('/minions', mid)
         return self._mkrequest('get', path).json()
 
     # POST /minions?
@@ -204,14 +205,14 @@ class SaltApi(object):
         if jid is ...:
             path = '/jobs'
         else:
-            path = urlparse.urljoin('/jobs', jid)
+            path = urlpath.join('/jobs', jid)
         return self._mkrequest('get', path).json()
 
     def keys(self, mid):
         if mid is ...:
             path = '/keys'
         else:
-            path = urlparse.urljoin('/keys', mid)
+            path = urlpath.join('/keys', mid)
         return self._mkrequest('get', path).json()
 
     def key_gen(self, mid, **kwargs):
@@ -238,7 +239,7 @@ class SaltApi(object):
         return tarfile.open(fileobj=buf, mode='r')
 
     def hook(self, path, body):
-        hookpath = urlparse.urljoin('/hook', path)
+        hookpath = urlpath.join('/hook', path)
         self._mkrequest('post', hookpath, body)
 
     def stats(self):

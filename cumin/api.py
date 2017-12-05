@@ -179,7 +179,7 @@ class SaltApi(object):
         self._mkrequest('post', '/logout').json()
         self.auth = {}
 
-    def unsessioned_run(self, cmds):
+    def run_unsessioned(self, cmds):
         '''
         Execute a command through salt-api and return the response, bypassing
         the usual session mechanisms.
@@ -200,7 +200,16 @@ class SaltApi(object):
             path = urlpath.join('/minions', mid)
         return self._mkrequest('get', path).json()
 
-    # POST /minions?
+    def run_async(self, cmds):
+        '''
+        Start an execution command and immediately return the job id.
+
+        lowstate data describing Salt commands must be sent in the request body.
+        The client option will be set to local_async.
+
+        :param list cmds: a list of command dictionaries
+        '''
+        return self._mkrequest('post', '/minions', cmds).json()
 
     def jobs(self, jid):
         if jid is ...:

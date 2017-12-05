@@ -11,7 +11,7 @@ from configparser import ConfigParser
 from .utils import umask
 
 DEFAULT_SETTINGS = {
-    'config': os.path.expanduser('~/.peppercache'),
+    'cache': os.path.expanduser('~/.peppercache'),
     'url': 'https://localhost:8000/',
     'user': None,
     'password': None,

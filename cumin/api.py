@@ -7,6 +7,7 @@ from six.moves.urllib import parse as urlparse
 import requests
 import tarfile
 import io
+from .utils import NullCache
 from .sse import stream_sse
 
 logger = logging.getLogger('pepper')
@@ -68,7 +69,7 @@ class SaltApi(object):
 
     '''
 
-    def __init__(self, api_url, ignore_ssl_errors=False):
+    def __init__(self, api_url, *, cache=None, ignore_ssl_errors=False):
         '''
         Initialize the class with the URL of the API
 
@@ -84,9 +85,14 @@ class SaltApi(object):
         if split.scheme not in ['http', 'https']:
             raise ValueError("salt-api URL missing HTTP(s) protocol: {0}".format(api_url))
 
+        if cache is None:
+            self.authcache = NullCache(None)
+        else:
+            self.authcache = cache
+
         self.api_url = api_url
         self._ssl_verify = not ignore_ssl_errors
-        self.auth = {}
+        self.auth = self.authcache.get_auth() or {}
         self.session = requests.Session()
 
     def _construct_url(self, path):
@@ -164,6 +170,7 @@ class SaltApi(object):
             'eauth': eauth,
         }).json()
         self.auth = body['return'][0]
+        self.authcache.set_auth(self.auth)
         return self.auth
 
     def logout(self):

@@ -14,7 +14,7 @@ class Client:
     def __init__(self, api_url, *, config=None, cache=None, ignore_ssl_errors=False):
         self.config = config or PepperrcConfig()
         self.cache = cache or NullCache(self.config)
-        self.api = SaltApi(api_url, ignore_ssl_errors)
+        self.api = SaltApi(api_url, cache=self.cache, ignore_ssl_errors=ignore_ssl_errors)
 
     def login(self, username, password, eauth):
         return self.api.login(username, password, eauth)

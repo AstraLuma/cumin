@@ -7,7 +7,7 @@ import json
 import time
 import getpass
 import collections.abc
-from configparser import ConfigParser, RawConfigParser
+from configparser import ConfigParser
 from .utils import umask
 
 DEFAULT_SETTINGS = {
@@ -138,6 +138,38 @@ class PepperrcConfig(DefaultConfig):
         if filename is ...:
             filename = os.path.expanduser('~/.pepperrc')
 
+        config = ConfigParser(interpolation=None)
+        config.read(filename)
+        if 'main' in config:
+            for k, v in config['main']:
+                if k in self.CONFIG_MAP:
+                    self[self.CONFIG_MAP[k]] = v
+
+
+class EnvironConfig(DefaultConfig):
+    """
+    Loads configurations from process environmnet (default os.environ)
+    """
+
+    CONFIG_MAP = {
+        'SALTAPI_USER': 'user',
+        'SALTAPI_PASS': 'password',
+        'SALTAPI_EAUTH': 'eauth',
+        'SALTAPI_URL': 'url',
+    }
+
+    def __init__(self, env=...):
+        self._init_from_defaults()
+        self._init_from_environ(env)
+
+    def _init_from_environ(self, env=...):
+        if env is ...:
+            env = os.environ
+
+        for k, v in env:
+            if k in self.CONFIG_MAP:
+                self[self.CONFIG_MAP[k]] = v
+
 
 class TuiConfig(DefaultConfig):
     """
@@ -175,102 +207,3 @@ class TuiPepperrcConfig(TuiConfig, PepperrcConfig, DefaultConfig):
         self._init_from_defaults()
         self._init_from_pepperrc(filename)
         self._init_from_tui()
-
-
-def get_login_details(self):
-    '''
-    This parses the config file, environment variables and command line options
-    and returns the config values
-    Order of parsing:
-        command line options, ~/.pepperrc, environment, defaults
-    '''
-
-    # setting default values
-    results = {
-        'SALTAPI_USER': None,
-        'SALTAPI_PASS': None,
-        'SALTAPI_EAUTH': 'auto',
-    }
-
-    try:
-        config = ConfigParser(interpolation=None)
-    except TypeError:
-        config = RawConfigParser()
-    config.read(self.options.config)
-
-    # read file
-    profile = 'main'
-    if config.has_section(profile):
-        for key, value in list(results.items()):
-            if config.has_option(profile, key):
-                results[key] = config.get(profile, key)
-
-    # get environment values
-    for key, value in list(results.items()):
-        results[key] = os.environ.get(key, results[key])
-
-    if results['SALTAPI_EAUTH'] == 'kerberos':
-        results['SALTAPI_PASS'] = None
-
-    if self.options.eauth:
-        results['SALTAPI_EAUTH'] = self.options.eauth
-    if self.options.username is None and results['SALTAPI_USER'] is None:
-        if self.options.interactive:
-            results['SALTAPI_USER'] = input('Username: ')
-        else:
-            logger.error("SALTAPI_USER required")
-            sys.exit(1)
-    else:
-        if self.options.username is not None:
-            results['SALTAPI_USER'] = self.options.username
-    if self.options.password is None and results['SALTAPI_PASS'] is None:
-        if self.options.interactive:
-            results['SALTAPI_PASS'] = getpass.getpass(prompt='Password: ')
-        else:
-            logger.error("SALTAPI_PASS required")
-            sys.exit(1)
-    else:
-        if self.options.password is not None:
-            results['SALTAPI_PASS'] = self.options.password
-
-    return results
-
-def parse_url(self):
-    '''
-    Determine api url
-    '''
-    url = 'https://localhost:8000/'
-
-    try:
-        config = ConfigParser(interpolation=None)
-    except TypeError:
-        config = RawConfigParser()
-    config.read(self.options.config)
-
-    # read file
-    profile = 'main'
-    if config.has_section(profile):
-        if config.has_option(profile, "SALTAPI_URL"):
-            url = config.get(profile, "SALTAPI_URL")
-
-    # get environment values
-    url = os.environ.get("SALTAPI_URL", url)
-
-    # get eauth prompt options
-    if self.options.saltapiurl:
-        url = self.options.saltapiurl
-
-    return url
-
-def parse_login(self):
-    '''
-    Extract the authentication credentials
-    '''
-    login_details = self.get_login_details()
-
-    # Auth values placeholder; grab interactively at CLI or from config
-    user = login_details['SALTAPI_USER']
-    passwd = login_details['SALTAPI_PASS']
-    eauth = login_details['SALTAPI_EAUTH']
-
-    return user, passwd, eauth

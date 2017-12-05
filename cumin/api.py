@@ -153,6 +153,7 @@ class SaltApi(object):
         elif resp.status_code == 500:
             raise ServerError
         else:
+            resp.raise_for_status()
             return resp
 
     def run(self, cmds):
@@ -178,7 +179,7 @@ class SaltApi(object):
         self._mkrequest('post', '/logout').json()
         self.auth = {}
 
-    def unsessioned_run(self, cmds, **kwargs):
+    def unsessioned_run(self, cmds):
         '''
         Execute a command through salt-api and return the response, bypassing
         the usual session mechanisms.

@@ -52,33 +52,6 @@ class AbstractCache(abc.ABC):
         """
 
 
-class DefaultConfig(collections.abc.MutableMapping):
-    """
-    Configuration that just initializes itself from default values.
-    """
-
-    def __init__(self):
-        self._data = DEFAULT_SETTINGS.copy()
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __setitem__(self, key, data):
-        self._data[key] = data
-
-    def __delitem__(self, key):
-        if key in DEFAULT_SETTINGS:
-            self._data[key] = DEFAULT_SETTINGS[key]
-        else:
-            del self._data[key]
-
-    def __iter__(self):
-        yield from self._data
-
-    def __len__(self):
-        return len(self._data)
-
-
 class NullCache(AbstractCache):
     """
     Implements the cache interface, but does nothing.
@@ -114,6 +87,36 @@ class FileCache(AbstractCache):
                 json.dump(auth, f)
 
 
+class DefaultConfig(collections.abc.MutableMapping):
+    """
+    Configuration that just initializes itself from default values.
+    """
+
+    def __init__(self):
+        self._init_from_defaults()
+
+    def _init_from_defaults(self):
+        self._data = DEFAULT_SETTINGS.copy()
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, data):
+        self._data[key] = data
+
+    def __delitem__(self, key):
+        if key in DEFAULT_SETTINGS:
+            self._data[key] = DEFAULT_SETTINGS[key]
+        else:
+            del self._data[key]
+
+    def __iter__(self):
+        yield from self._data
+
+    def __len__(self):
+        return len(self._data)
+
+
 class PepperrcConfig(DefaultConfig):
     """
     Loads configurations from a pepperrc file (default is ~/.pepperrc),
@@ -128,14 +131,17 @@ class PepperrcConfig(DefaultConfig):
     }
 
     def __init__(self, filename=...):
-        super().__init__(self)
+        self._init_from_defaults()
+        self._init_from_pepperrc(filename)
+
+    def _init_from_pepperrc(self, filename=...):
         if filename is ...:
             filename = os.path.expanduser('~/.pepperrc')
 
 
-class CliPepperrcConfig(PepperrcConfig):
+class TuiConfig(DefaultConfig):
     """
-    Same as PepperrcConfig, but may also prompt the user for information.
+    Prompts the user for information.
     """
 
     PROMPTERS = {
@@ -146,15 +152,29 @@ class CliPepperrcConfig(PepperrcConfig):
         ),
     }
 
-    def __init__(self, filename=...):
+    def __init__(self):
         """
         Loads config information from file, and then prompts the user to fill in
         missing bits
         """
-        super().__init__(filename)
+        self._init_from_defaults()
+        self._init_from_tui()
+
+    def _init_from_tui(self):
         for field, prompter in self.PROMPTERS:
             if not self[field]:
                 self[field] = prompter()
+
+
+class TuiPepperrcConfig(TuiConfig, PepperrcConfig, DefaultConfig):
+    """
+    Composes TUI and Pepperrc configurations.
+    """
+
+    def __init__(self, filename=...):
+        self._init_from_defaults()
+        self._init_from_pepperrc(filename)
+        self._init_from_tui()
 
 
 def get_login_details(self):

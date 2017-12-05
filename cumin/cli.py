@@ -2,17 +2,12 @@
 A CLI interface to a remote salt-api instance
 
 '''
-import sys
 import json
 import logging
 import optparse
-import os
-import getpass
-import time
-from six.moves.configparser import ConfigParser, RawConfigParser
-from six.moves import input
 
 from .client import Client
+from .config import FileCache, Config, load_config_environ, load_config_pepperrc, load_config_tui
 from . import __version__
 
 logger = logging.getLogger('pepper')
@@ -39,10 +34,7 @@ class PepperCli(object):
         Parse all args
         '''
         self.parser.add_option(
-            '-c', dest='config', default=os.environ.get(
-                'PEPPERRC',
-                os.path.join(os.path.expanduser('~'), '.pepperrc')
-            ),
+            '-c', dest='config', default=None,
             help='Configuration file location. Default is a file path in the '
                  '"PEPPERRC" environment variable or ~/.pepperrc.',
         )
@@ -50,13 +42,6 @@ class PepperCli(object):
         self.parser.add_option(
             '-v', dest='verbose', default=0, action='count',
             help='Increment output verbosity; may be specified multiple times',
-        )
-
-        self.parser.add_option(
-            '--ignore-ssl-errors', action='store_true', dest='ignore_ssl_certificate_errors',
-            default=False,
-            help='Ignore any SSL certificate that may be encountered. Note that it is recommended '
-            'to resolve certificate errors for production.',
         )
 
         self.options, self.args = self.parser.parse_args()
@@ -75,7 +60,7 @@ class PepperCli(object):
 
         optgroup.add_option(
             '--client', dest='client', default='local',
-            help='specify the salt-api client to use (local, local_async,runner, etc)')
+            help='specify the salt-api client to use (local, local_async, runner, etc)')
 
         optgroup.add_option(
             '--json', dest='json_input',
@@ -114,47 +99,69 @@ class PepperCli(object):
 
         optgroup.add_option(
             '-E', '--pcre', dest='tgt_type', action='store_const', const='pcre',
-            help="Target hostnames using PCRE regular expressions"
+            help="Instead of using shell globs to evaluate the target servers, "
+            "use pcre regular expressions."
         )
 
         optgroup.add_option(
             '-L', '--list', dest='tgt_type', action='store_const', const='list',
-            help="Specify a comma delimited list of hostnames"
+            help="Instead of using shell globs to evaluate the target servers, "
+            "take a comma or space delimited list of servers."
         )
 
         optgroup.add_option(
             '-G', '--grain', dest='tgt_type', action='store_const', const='grain',
-            help="Target based on system properties"
+            help='Instead of using shell globs to evaluate the target use a '
+            'grain value to identify targets, the syntax for the target is the '
+            'grain key followed by a globexpression: "os:Arch*".'
         )
 
         optgroup.add_option(
-            '--grain-pcre', dest='tgt_type', action='store_const', const='grain_pcre',
-            help="Target based on PCRE matches on system properties"
-        )
-
-        optgroup.add_option(
-            '-I', '--pillar', dest='tgt_type', action='store_const', const='pillar',
-            help="Target based on pillar values"
-        )
-
-        optgroup.add_option(
-            '--pillar-pcre', dest='tgt_type', action='store_const', const='pillar_pcre',
-            help="Target based on PCRE matches on pillar values"
-        )
-
-        optgroup.add_option(
-            '-R', '--range', dest='tgt_type', action='store_const', const='range',
-            help="Target based on range expression"
-        )
-
-        optgroup.add_option(
-            '-C', '--compound', dest='tgt_type', action='store_const', const='compound',
-            help="Target based on compound expression"
+            '-P', '--grain-pcre', dest='tgt_type', action='store_const', const='grain_pcre',
+            help='Instead of using shell globs to evaluate the target use a '
+            'grain value to identify targets, the syntax for the target is the '
+            'grain key followed by a pcre regular expression: "os:Arch.*".'
         )
 
         optgroup.add_option(
             '-N', '--nodegroup', dest='tgt_type', action='store_const', const='nodegroup',
-            help="Target based on a named nodegroup"
+            help="Instead of using shell globs to evaluate the target use one of "
+            "the predefined nodegroups to identify a list of targets."
+        )
+
+        optgroup.add_option(
+            '-R', '--range', dest='tgt_type', action='store_const', const='range',
+            help="Instead of using shell globs to evaluate the target use a range "
+            "expression to identify targets. Range expressions look like %cluster."
+        )
+
+        optgroup.add_option(
+            '-C', '--compound', dest='tgt_type', action='store_const', const='compound',
+            help="The compound target option allows for multiple target types to "
+            "be evaluated, allowing for greater granularity in target matching. "
+            "The compound target is space delimited, targets other than globs are "
+            "preceded with an identifier matching the specific targets argument "
+            "type: salt 'G@os:RedHat and webser* or E@database.*'."
+        )
+
+        optgroup.add_option(
+            '-I', '--pillar', dest='tgt_type', action='store_const', const='pillar',
+            help='Instead of using shell globs to evaluate the target use a pillar '
+            'value to identify targets, the syntax for the target is the pillar '
+            'key followed by a glob expression: "role:production*".'
+        )
+
+        optgroup.add_option(
+            '-J', '--pillar-pcre', dest='tgt_type', action='store_const', const='pillar_pcre',
+            help='Instead of using shell globs to evaluate the target use a pillar '
+            'value to identify targets, the syntax for the target is the pillar '
+            'key followed by a pcre regular expression: "role:prod.*".'
+
+        )
+
+        optgroup.add_option(
+            '-S', '--ipcidr', dest='tgt_type', action='store_const', const='ipcidr',
+            help="Match based on Subnet (CIDR notation) or IP address."
         )
 
         optgroup.add_option('--batch', dest='batch', default=None)
@@ -201,214 +208,64 @@ class PepperCli(object):
         optgroup.add_option(
             '-T', '--make-token', default=False, dest='mktoken', action='store_true',
             help="Generate and save an authentication token for re-use. The token is "
-            "generated and made available for the period defined in the Salt Master.")
+            "generated and made available for the period defined in the Salt Master."
+        )
 
-        optgroup.add_option('-x', dest='cache',
-            default=os.environ.get('PEPPERCACHE',
-                os.path.join(os.path.expanduser('~'), '.peppercache')),
-            help=textwrap.dedent('''\
-                Cache file location. Default is a file path in the
-                "PEPPERCACHE" environment variable or ~/.peppercache.'''))
+        optgroup.add_option(
+            '-x', dest='cache', default=None,
+            help='Cache file location. Default is a file path in the "PEPPERCACHE" '
+            'environment variable or ~/.peppercache.'
+        )
 
         return optgroup
 
-    def get_login_details(self):
-        '''
-        This parses the config file, environment variables and command line options
-        and returns the config values
-        Order of parsing:
-            command line options, ~/.pepperrc, environment, defaults
-        '''
+    CONFIG_MAP = {
+        # argparse : config
+        'saltapiurl': 'url',
+        'eauth': 'eauth',
+        'username': 'user',
+        'password': 'password',
+        'cache': 'cache',
+    }
 
-        # setting default values
-        results = {
-            'SALTAPI_USER': None,
-            'SALTAPI_PASS': None,
-            'SALTAPI_EAUTH': 'auto',
+    def load_config_cache(self):
+        config = Config()
+        load_config_pepperrc(config, self.options.config)
+        load_config_environ(config)
+
+        for arg, conf in self.CONFIG_MAP.items():
+            if getattr(self.options, arg, None):
+                config[conf] = getattr(self.options, arg, None)
+
+        load_config_tui(config)
+
+        if self.options.mktoken:
+            cache = FileCache(config)
+        else:
+            cache = None
+
+        return config, cache
+
+    def parse_target(self):
+        opts = {
+            'fun': ...,
+            'arg': ...,
+            'kwarg': ...,
         }
+        # tgt, fun, arg=None, kwarg=None, tgt_type='glob', timeout=None, ret=None
+        if self.options.client in ('local', 'local_async', 'local_batch'):
+            opts.update({
+                'tgt': ...,
+                'tgt_type': ...,
+            })
+        if self.options.client == 'local_batch':
+            opts.update({
+                'batch': ...,
+            })
+        return opts
 
-        try:
-            config = ConfigParser(interpolation=None)
-        except TypeError:
-            config = RawConfigParser()
-        config.read(self.options.config)
-
-        # read file
-        profile = 'main'
-        if config.has_section(profile):
-            for key, value in list(results.items()):
-                if config.has_option(profile, key):
-                    results[key] = config.get(profile, key)
-
-        # get environment values
-        for key, value in list(results.items()):
-            results[key] = os.environ.get(key, results[key])
-
-        if results['SALTAPI_EAUTH'] == 'kerberos':
-            results['SALTAPI_PASS'] = None
-
-        if self.options.eauth:
-            results['SALTAPI_EAUTH'] = self.options.eauth
-        if self.options.username is None and results['SALTAPI_USER'] is None:
-            if self.options.interactive:
-                results['SALTAPI_USER'] = input('Username: ')
-            else:
-                logger.error("SALTAPI_USER required")
-                sys.exit(1)
-        else:
-            if self.options.username is not None:
-                results['SALTAPI_USER'] = self.options.username
-        if self.options.password is None and results['SALTAPI_PASS'] is None:
-            if self.options.interactive:
-                results['SALTAPI_PASS'] = getpass.getpass(prompt='Password: ')
-            else:
-                logger.error("SALTAPI_PASS required")
-                sys.exit(1)
-        else:
-            if self.options.password is not None:
-                results['SALTAPI_PASS'] = self.options.password
-
-        return results
-
-    def parse_url(self):
-        '''
-        Determine api url
-        '''
-        url = 'https://localhost:8000/'
-
-        try:
-            config = ConfigParser(interpolation=None)
-        except TypeError:
-            config = RawConfigParser()
-        config.read(self.options.config)
-
-        # read file
-        profile = 'main'
-        if config.has_section(profile):
-            if config.has_option(profile, "SALTAPI_URL"):
-                url = config.get(profile, "SALTAPI_URL")
-
-        # get environment values
-        url = os.environ.get("SALTAPI_URL", url)
-
-        # get eauth prompt options
-        if self.options.saltapiurl:
-            url = self.options.saltapiurl
-
-        return url
-
-    def parse_login(self):
-        '''
-        Extract the authentication credentials
-        '''
-        login_details = self.get_login_details()
-
-        # Auth values placeholder; grab interactively at CLI or from config
-        user = login_details['SALTAPI_USER']
-        passwd = login_details['SALTAPI_PASS']
-        eauth = login_details['SALTAPI_EAUTH']
-
-        return user, passwd, eauth
-
-    def parse_cmd(self):
-        '''
-        Extract the low data for a command from the passed CLI params
-        '''
-        # Short-circuit if JSON was given.
-        if self.options.json_input:
-            try:
-                return json.loads(self.options.json_input)
-            except ValueError:
-                logger.error("Invalid JSON given.")
-                raise SystemExit(1)
-
-        args = list(self.args)
-
-        client = self.options.client if not self.options.batch else 'local_batch'
-        low = {'client': client}
-
-        if client.startswith('local'):
-            if len(args) < 2:
-                self.parser.error("Command or target not specified")
-
-            low['tgt_type'] = self.options.tgt_type
-            low['tgt'] = args.pop(0)
-            low['fun'] = args.pop(0)
-            low['batch'] = self.options.batch
-            low['arg'] = args
-        elif client.startswith('runner'):
-            low['fun'] = args.pop(0)
-            for arg in args:
-                if '=' in arg:
-                    key, value = arg.split('=', 1)
-                    low[key] = value
-                else:
-                    low.setdefault('args', []).append(arg)
-        elif client.startswith('wheel'):
-            low['fun'] = args.pop(0)
-            for arg in args:
-                if '=' in arg:
-                    key, value = arg.split('=', 1)
-                    low[key] = value
-                else:
-                    low.setdefault('args', []).append(arg)
-        elif client.startswith('ssh'):
-            if len(args) < 2:
-                self.parser.error("Command or target not specified")
-
-            low['tgt_type'] = self.options.tgt_type
-            low['tgt'] = args.pop(0)
-            low['fun'] = args.pop(0)
-            low['batch'] = self.options.batch
-            low['arg'] = args
-        else:
-            if len(args) < 1:
-                self.parser.error("Command not specified")
-
-            low['fun'] = args.pop(0)
-            low['arg'] = args
-
-        return [low]
-
-    def poll_for_returns(self, api, load):
-        '''
-        Run a command with the local_async client and periodically poll the job
-        cache for returns for the job.
-        '''
-        load[0]['client'] = 'local_async'
-        async_ret = api.low(load)
-        jid = async_ret['return'][0]['jid']
-        nodes = async_ret['return'][0]['minions']
-        ret_nodes = []
-        exit_code = 1
-
-        # keep trying until all expected nodes return
-        total_time = 0
-        start_time = time.time()  # FIXME: Use time.perf_counter()
-        exit_code = 0
-        while True:
-            total_time = time.time() - start_time
-            if total_time > self.options.timeout:
-                exit_code = 1
-                break
-
-            jid_ret = api.lookup_jid(jid)
-            responded = set(jid_ret['return'][0].keys()) ^ set(ret_nodes)
-            for node in responded:
-                yield None, "{{{}: {}}}".format(
-                    node,
-                    jid_ret['return'][0][node])
-            ret_nodes = list(jid_ret['return'][0].keys())
-
-            if set(ret_nodes) == set(nodes):
-                exit_code = 0
-                break
-            else:
-                time.sleep(self.seconds_to_wait)
-
-        exit_code = exit_code if self.options.fail_if_minions_dont_respond else 0
-        yield exit_code, "{{Failed: {}}}".format(
-            list(set(ret_nodes) ^ set(nodes)))
+    def format_response(self, data):
+        return json.dumps(data, indent=4)
 
     def run(self):
         '''
@@ -420,42 +277,31 @@ class PepperCli(object):
         logger.addHandler(logging.StreamHandler())
         logger.setLevel(max(logging.ERROR - (self.options.verbose * 10), 1))
 
-        load = self.parse_cmd()
+        config, cache = self.load_config_cache()
 
-        api = Client(
-            self.parse_url(),
-            ignore_ssl_errors=self.options.ignore_ssl_certificate_errors)
-        if self.options.mktoken:
-            token_file = self.options.cache
-            try:
-                with open(token_file, 'rt') as f:
-                    api.auth = json.load(f)
-                if api.auth['expire'] < time.time() + 30:
-                    logger.error('Login token expired')
-                    raise Exception('Login token expired')
-                api.req('/stats')
-            except Exception as e:
-                if e.args[0] is not 2:
-                    logger.error('Unable to load login token from ~/.peppercache ' + str(e))
-                    logger.error('Unable to load login token from {0} {1}'.format(token_file, str(e)))
-                auth = api.login(*self.parse_login())
-                try:
-                    oldumask = os.umask(0)
-                    fdsc = os.open(token_file, os.O_WRONLY | os.O_CREAT, 0o600)
-                    with os.fdopen(fdsc, 'wt') as f:
-                        json.dump(auth, f)
-                except Exception as e:
-                    logger.error('Unable to save token to ~/.pepperache ' + str(e))
-                    logger.error('Unable to save token to {0} {1}'.format(token_file, str(e)))
-                finally:
-                    os.umask(oldumask)
-        else:
-            auth = api.login(*self.parse_login())
+        args = self.parse_target()
 
-        if self.options.fail_if_minions_dont_respond:
-            for exit_code, ret in self.poll_for_returns(api, load):
-                yield exit_code, json.dumps(ret, sort_keys=True, indent=4)
+        self.client = Client(
+            config=config,
+            cache=cache,
+            ignore_ssl_errors=self.options.ignore_ssl_certificate_errors,
+            auto_login=True,
+        )
+
+        if self.options.json_input:
+            data = json.loads(self.options.json_input)
+            res = self.client.api.run(data)
+            yield 0, self.format_response(res)
+        elif self.options.client == 'local_async':
+            minions, results = self.client.local_async(**args)
+            for mid, res in results:
+                minions.pop(mid)
+                yield 0, self.format_response(res)
+                if not minions:
+                    break
+            # FIXME: Timeout
+            if minions:
+                yield 1, "No response from {}".format(', '.join(minions))
         else:
-            ret = api.low(load)
-            exit_code = 0
-            yield exit_code, json.dumps(ret, sort_keys=True, indent=4)
+            res = getattr(self.client, self.options.client)(**args)
+            yield 0, self.format_response(res)

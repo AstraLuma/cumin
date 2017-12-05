@@ -3,7 +3,7 @@ A mid-level client to make executing commands easier.
 """
 from functools import partial
 from .api import SaltApi
-from .auth import PepperrcConfig, NullCache
+from .auth import standard_configuration, NullCache
 
 
 def _dict_filter_none(**kwarg):
@@ -11,10 +11,21 @@ def _dict_filter_none(**kwarg):
 
 
 class Client:
-    def __init__(self, api_url, *, config=None, cache=None, ignore_ssl_errors=False):
-        self.config = config or PepperrcConfig()
+    def __init__(self, api_url=None, *, config=None, cache=None, ignore_ssl_errors=False, auto_login=True):
+        """
+        * api_url: URL to use, defaulting to one loaded from configuration
+        * config: A configuration, defaulting to standard_configuration
+        * cache: Authentication Cache to use, defaulting to NullCache
+        * ignore_ssl_errors: Don't validate certificates
+        * auto_login: Attempt to login automatically, if credentials are available
+          and nothing is cached (Default: True)
+        """
+        self.config = config or standard_configuration()
         self.cache = cache or NullCache(self.config)
-        self.api = SaltApi(api_url, cache=self.cache, ignore_ssl_errors=ignore_ssl_errors)
+        self.api = SaltApi(api_url or self.config['url'], cache=self.cache, ignore_ssl_errors=ignore_ssl_errors)
+
+        if auto_login and self.config['user'] and not self.api.auth:
+            self.login(self.config['user'], self.config['password'], self.config['eauth'])
 
     def login(self, username, password, eauth):
         return self.api.login(username, password, eauth)

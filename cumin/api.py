@@ -37,7 +37,7 @@ class AuthenticationDenied(PepperException):
 
 class ServerError(PepperException):
     """
-    500:Server error.
+    500:Server error
     """
 
 

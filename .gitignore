@@ -2,6 +2,7 @@
 *.py[co]
 *.swp
 *.DS_Store
+*.egg-info
 
 MANIFEST
 dist/

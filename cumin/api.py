@@ -70,14 +70,14 @@ class SaltApi(object):
 
     '''
 
-    def __init__(self, api_url, *, cache=None, ignore_ssl_errors=False):
+    def __init__(self, api_url, *, cache=None, ssl_verify=False):
         '''
         Initialize the class with the URL of the API
 
         :param api_url: Host or IP address of the salt-api URL;
             include the port number
 
-        :param ignore_ssl_errors: Add a flag to urllib2 to ignore invalid SSL certificates
+        :param ssl_verify: A bool or string pointing to something that looks like a CA or trust store
 
         :raises ValueError: if the api_url is misformed
 
@@ -92,7 +92,7 @@ class SaltApi(object):
             self.authcache = cache
 
         self.api_url = api_url
-        self._ssl_verify = not ignore_ssl_errors
+        self._ssl_verify = ssl_verify
         self.auth = self.authcache.get_auth() or {}
         self.session = requests.Session()
 

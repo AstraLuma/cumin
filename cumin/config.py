@@ -16,6 +16,7 @@ DEFAULT_SETTINGS = {
     'user': None,
     'password': None,
     'eauth': 'auto',
+    'verify': True
 }
 
 
@@ -128,6 +129,7 @@ def load_config_pepperrc(config, filename=None):
         'saltapi_pass': 'password',
         'saltapi_eauth': 'eauth',
         'saltapi_url': 'url',
+        'saltapi_ssl_verify': 'verify',
     }
 
     if not filename:
@@ -151,6 +153,7 @@ def load_config_environ(config, environ=None):
         'SALTAPI_PASS': 'password',
         'SALTAPI_EAUTH': 'eauth',
         'SALTAPI_URL': 'url',
+        'SALTAPI_SSL_VERIFY': 'verify',
     }
 
     if environ is None:  # Don't overwrite {}

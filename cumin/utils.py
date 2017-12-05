@@ -9,3 +9,4 @@ def umask(new_mask):
         yield
     finally:
         os.umask(cur_mask)
+

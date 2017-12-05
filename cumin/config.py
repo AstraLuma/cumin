@@ -87,7 +87,7 @@ class FileCache(AbstractCache):
                 json.dump(auth, f)
 
 
-class DefaultConfig(collections.abc.MutableMapping):
+class Config(collections.abc.MutableMapping):
     """
     Configuration that just initializes itself from default values.
     """
@@ -117,7 +117,7 @@ class DefaultConfig(collections.abc.MutableMapping):
         return len(self._data)
 
 
-class PepperrcConfig(DefaultConfig):
+def load_config_pepperrc(config, filename=None):
     """
     Loads configurations from a pepperrc file (default is ~/.pepperrc),
     overridable by environment variables.
@@ -130,23 +130,18 @@ class PepperrcConfig(DefaultConfig):
         'SALTAPI_URL': 'url',
     }
 
-    def __init__(self, filename=...):
-        self._init_from_defaults()
-        self._init_from_pepperrc(filename)
+    if not filename:
+        filename = os.path.expanduser('~/.pepperrc')
 
-    def _init_from_pepperrc(self, filename=...):
-        if filename is ...:
-            filename = os.path.expanduser('~/.pepperrc')
-
-        config = ConfigParser(interpolation=None)
-        config.read(filename)
-        if 'main' in config:
-            for k, v in config['main']:
-                if k in self.CONFIG_MAP:
-                    self[self.CONFIG_MAP[k]] = v
+    config = ConfigParser(interpolation=None)
+    config.read(filename)
+    if 'main' in config:
+        for k, v in config['main']:
+            if k in CONFIG_MAP:
+                config[CONFIG_MAP[k]] = v
 
 
-class EnvironConfig(DefaultConfig):
+def load_config_environ(config, environ=None):
     """
     Loads configurations from process environmnet (default os.environ)
     """
@@ -158,52 +153,42 @@ class EnvironConfig(DefaultConfig):
         'SALTAPI_URL': 'url',
     }
 
-    def __init__(self, env=...):
-        self._init_from_defaults()
-        self._init_from_environ(env)
+    if environ is None:  # Don't overwrite {}
+        environ = os.environ
 
-    def _init_from_environ(self, env=...):
-        if env is ...:
-            env = os.environ
-
-        for k, v in env:
-            if k in self.CONFIG_MAP:
-                self[self.CONFIG_MAP[k]] = v
+    for k, v in environ:
+        if k in CONFIG_MAP:
+            config[CONFIG_MAP[k]] = v
 
 
-class TuiConfig(DefaultConfig):
+def load_config_tui(config):
     """
     Prompts the user for information.
     """
 
     PROMPTERS = {
-        'user': lambda self: input('Username: '),
+        'user': lambda: input('Username: '),
         'password': (
-            lambda self:
-            None if self['eauth'] == 'kerberos' else getpass.getpass(prompt='Password: ')
+            lambda:
+            None if config['eauth'] == 'kerberos' else getpass.getpass(prompt='Password: ')
         ),
     }
 
-    def __init__(self):
-        """
-        Loads config information from file, and then prompts the user to fill in
-        missing bits
-        """
-        self._init_from_defaults()
-        self._init_from_tui()
-
-    def _init_from_tui(self):
-        for field, prompter in self.PROMPTERS:
-            if not self[field]:
-                self[field] = prompter()
+    for field, prompter in PROMPTERS:
+        if not config[field]:
+            config[field] = prompter()
 
 
-class TuiPepperrcConfig(TuiConfig, PepperrcConfig, DefaultConfig):
+def standard_configuration(*, pepperrc=None, environ=None):
     """
-    Composes TUI and Pepperrc configurations.
-    """
+    Builds a standard configuration, suitable for most API clients.
 
-    def __init__(self, filename=...):
-        self._init_from_defaults()
-        self._init_from_pepperrc(filename)
-        self._init_from_tui()
+    Standard uses this order:
+    1. Process environment
+    2. .pepperrc file
+    3. Hard-coded defaults
+    """
+    config = Config()
+    load_config_pepperrc(config)
+    load_config_environ(config)
+    return config

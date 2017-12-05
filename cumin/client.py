@@ -1,7 +1,7 @@
 """
 A mid-level client to make executing commands easier.
 """
-from functools import partial
+from collections import ChainMap
 from .api import SaltApi
 from .config import standard_configuration, NullCache
 
@@ -56,8 +56,11 @@ class Client:
     def local_async(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     timeout=None, ret=None):
         """
-        Run a single execution function on one or more minions and get a
-        callable to get the job status.
+        Run a single execution function on one or more minions and a generator
+        producing (mid, result) pairs as they are available. (Or (None, None) if
+        no new minions have responded.)
+
+        NOTE: Every loop through the generator is an API call.
         """
         body = self.api.run([_dict_filter_none(
             client='local_async',
@@ -71,7 +74,23 @@ class Client:
         )])
         jid = body['return'][0]['jid']
         minions = body['return'][0]['minions']
-        return minions, (lambda: self.api.jobs(jid)['info'][0])
+
+        def asynciter():
+            waiting_for = set(minions)
+            while waiting_for:
+                # Note: runner:jobs.lookup_jid gives this to us directly, but
+                # requires runner permissions
+                status = self.api.jobs(jid)['info'][0]
+                results = status['Result']
+                finished = set(waiting_for).intersection(set(results.keys()))
+                if finished:
+                    for m in finished:
+                        yield m, results[m]
+                    waiting_for -= finished
+                else:
+                    yield None, None
+
+        return minions, asynciter()
 
     def local_batch(self, tgt, fun, arg=None, kwarg=None, tgt_type='glob',
                     batch='50%', ret=None):
@@ -79,7 +98,9 @@ class Client:
         Run a single execution function on one or more minions in staged batches,
         waiting for the results.
         """
-        for result in self.api.run([_dict_filter_none(
+        # We don't have the option to get results as they finish, so just merge
+        # everything
+        batches = self.api.run([_dict_filter_none(
             client='local_batch',
             tgt=tgt,
             fun=fun,
@@ -88,8 +109,8 @@ class Client:
             tgt_type=tgt_type,
             batch=batch,
             ret=ret,
-        )])['return']:
-            yield result
+        )])['return']
+        return ChainMap(*batches)
 
     def runner(self, fun, arg=None, kwarg=None):
         """

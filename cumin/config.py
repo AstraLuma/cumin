@@ -154,6 +154,7 @@ def load_config_environ(config, environ=None):
         'SALTAPI_EAUTH': 'eauth',
         'SALTAPI_URL': 'url',
         'SALTAPI_SSL_VERIFY': 'verify',
+        'PEPPERCACHE': 'cache',
     }
 
     if environ is None:  # Don't overwrite {}

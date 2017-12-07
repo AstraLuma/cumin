@@ -18,8 +18,6 @@ setup_kwargs = {
     'url': 'http://saltstack.com',
     'classifiers': [
         'Programming Language :: Python',
-        'Programming Language :: Cython',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

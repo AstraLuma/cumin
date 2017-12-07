@@ -37,7 +37,7 @@ setup_kwargs = {
     },
     'entry_points': {
         'console_scripts': [
-            'cumin = cumin.__main__'
+            'cumin = cumin.__main__:main'
         ]
     },
     'install_requires': [

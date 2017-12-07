@@ -12,11 +12,12 @@ from cumin import PepperException
 
 from logging import NullHandler
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(module)s: %(message)s')
-logger = logging.getLogger('pepper')
-logger.addHandler(NullHandler())
 
-if __name__ == '__main__':
+def main():
+    logging.basicConfig(format='%(levelname)s %(asctime)s %(module)s: %(message)s')
+    logger = logging.getLogger('pepper')
+    logger.addHandler(NullHandler())
+
     try:
         cli = PepperCli()
         for exit_code, result in cli.run():
@@ -30,3 +31,7 @@ if __name__ == '__main__':
     #     raise
     finally:
         pass
+
+
+if __name__ == '__main__':
+    main()

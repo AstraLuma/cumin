@@ -313,7 +313,8 @@ class PepperCli(object):
                 if time.time() > end:
                     break
             if minions:
-                yield 1, "No response from {}".format(', '.join(minions))
+                ret = 1 if self.options.fail_if_minions_dont_respond else 0
+                yield ret, "No response from {}".format(', '.join(minions))
         else:
             res = getattr(self.client, self.options.client)(**args)
             yield None, self.format_response(res)

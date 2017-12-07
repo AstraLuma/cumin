@@ -47,7 +47,7 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            tgt_type=tgt_type,
+            expr_form=tgt_type,  # Will be tgt_type in a future version
             timeout=timeout,
             ret=ret,
         )])['return'][0]
@@ -67,7 +67,7 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            tgt_type=tgt_type,
+            expr_form=tgt_type,  # Will be tgt_type in a future version
             timeout=timeout,
             ret=ret,
         )])
@@ -105,7 +105,7 @@ class Client:
             fun=fun,
             arg=arg,
             kwarg=kwarg,
-            tgt_type=tgt_type,
+            expr_form=tgt_type,  # Will be tgt_type in a future version
             batch=batch,
             ret=ret,
         )])['return']

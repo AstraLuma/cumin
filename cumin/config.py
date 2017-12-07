@@ -177,7 +177,7 @@ def load_config_tui(config):
         ),
     }
 
-    for field, prompter in PROMPTERS:
+    for field, prompter in PROMPTERS.items():
         if not config[field]:
             config[field] = prompter()
 

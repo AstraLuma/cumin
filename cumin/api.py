@@ -149,9 +149,9 @@ class SaltApi(object):
             data=json.dumps(data),
         )
         if resp.status_code == 401:
-            raise AuthenticationDenied
+            raise AuthenticationDenied(resp.text)
         elif resp.status_code == 500:
-            raise ServerError
+            raise ServerError(resp.text)
         else:
             resp.raise_for_status()
             return resp

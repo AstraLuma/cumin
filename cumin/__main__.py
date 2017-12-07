@@ -7,8 +7,8 @@ from __future__ import print_function
 import sys
 import logging
 
-from pepper.cli import PepperCli
-from pepper import PepperException
+from cumin.cli import PepperCli
+from cumin import PepperException
 
 from logging import NullHandler
 
@@ -23,8 +23,10 @@ if __name__ == '__main__':
             print(result)
             if exit_code is not None:
                 sys.exit(exit_code)
-    except PepperException as exc:
-        sys.exit('Pepper error: {0}'.format(exc))
-    except Exception as e:
-        logger.debug('Uncaught traceback:', exc_info=True)
-        raise
+    # except PepperException as exc:
+    #     sys.exit('Pepper error: {0}'.format(exc))
+    # except Exception as e:
+    #     logger.debug('Uncaught traceback:', exc_info=True)
+    #     raise
+    finally:
+        pass

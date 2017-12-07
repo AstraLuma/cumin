@@ -29,8 +29,8 @@ def main():
     # except Exception as e:
     #     logger.debug('Uncaught traceback:', exc_info=True)
     #     raise
-    finally:
-        pass
+    except (KeyboardInterrupt, SystemExit):
+        sys.exit()
 
 
 if __name__ == '__main__':

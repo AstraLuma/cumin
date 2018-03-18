@@ -80,13 +80,14 @@ class FileCache(AbstractCache):
                 try:
                     auth = json.load(f)
                 except json.decoder.JSONDecodeError:
-                    # Assuming the file is corrupt, eating the exception
+                    # Assuming the file is corrupt. Eating the exception
                     return
             if auth['expire'] < time.time() + 30:  # XXX: Why +30?
                 return
             return auth
 
     def set_auth(self, auth):
+        # A bunch of extra work to set file permissions without having a window of leak
         with umask(0):
             fdsc = os.open(self.token_file, os.O_WRONLY | os.O_CREAT, 0o600)
             with os.fdopen(fdsc, 'wt') as f:

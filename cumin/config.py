@@ -75,11 +75,16 @@ class FileCache(AbstractCache):
         self.token_file = config['cache']
 
     def get_auth(self):
-        with open(self.token_file, 'rt') as f:
-            auth = json.load(f)
-        if auth['expire'] < time.time() + 30:  # XXX: Why +30?
-            auth = None
-        return auth
+        if self.token_file and os.path.exists(self.token_file):
+            with open(self.token_file, 'rt') as f:
+                try:
+                    auth = json.load(f)
+                except json.decoder.JSONDecodeError:
+                    # Assuming the file is corrupt, eating the exception
+                    return
+            if auth['expire'] < time.time() + 30:  # XXX: Why +30?
+                return
+            return auth
 
     def set_auth(self, auth):
         with umask(0):

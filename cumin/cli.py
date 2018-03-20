@@ -52,7 +52,7 @@ class PepperCli(object):
         optgroup = self.parser.add_argument_group(
             "Pepper ``salt`` Options", "Mimic the ``salt`` CLI")
 
-        optgroup.add_argument('cmd', nargs='+', help='Command to run')
+        optgroup.add_argument('cmd', nargs='*', help='Command to run')
 
         optgroup.add_argument(
             '-t', '--timeout', dest='timeout', type=int, default=60,
@@ -71,6 +71,10 @@ class PepperCli(object):
             'ignored.',
         )
 
+        optgroup.add_argument(
+            '--events', dest='events', action='store_true',
+            help='Show an event stream. No commands will be executed.',
+        )
         # optgroup.add_argument('--out', '--output', dest='output',
         #        help="Specify the output format for the command output")
 
@@ -250,6 +254,9 @@ class PepperCli(object):
     def parse_target(self):
         opts = {}
 
+        if self.options.events:
+            return opts
+
         # Soooo... it turns out salt-api parses out kwargs for us, sometimes
         if self.options.client in ('local', 'local_async', 'local_batch'):
             opts.update({
@@ -300,6 +307,9 @@ class PepperCli(object):
             data = json.loads(self.options.json_input)
             res = self.client.api.run(data)
             yield None, self.format_response(res)
+        elif self.options.events:
+            for ev in self.client.events():
+                print(json.dumps(ev, indent=2))
         elif self.options.client == 'local_async':
             minions, results = self.client.local_async(**args)
             start = time.time()

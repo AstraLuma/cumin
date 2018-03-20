@@ -122,7 +122,7 @@ class SaltApi(object):
         # else:
         #     raise MissingLogin
 
-    def _mkrequest(self, method, path, data=None, headers={}):
+    def _mkrequest(self, method, path, data=None, headers={}, **kwargs):
         '''
         A thin wrapper around request and request_kerberos to send
         requests and return the response
@@ -147,6 +147,7 @@ class SaltApi(object):
             verify=self._ssl_verify,
             auth=auth,
             data=json.dumps(data),
+            **kwargs
         )
         if resp.status_code == 401:
             raise AuthenticationDenied(resp.text)

@@ -309,7 +309,7 @@ class PepperCli(object):
             yield None, self.format_response(res)
         elif self.options.events:
             for ev in self.client.events():
-                print(json.dumps(ev, indent=2))
+                yield None, self.format_response(ev)
         elif self.options.client == 'local_async':
             minions, results = self.client.local_async(**args)
             start = time.time()

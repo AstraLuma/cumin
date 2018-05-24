@@ -15,6 +15,8 @@ setup_kwargs = {
     'description': __doc__.strip(),
     'author': 'Seth House',
     'author_email': 'shouse@saltstack.com',
+    'maintainer': 'Jamie Bliss',
+    'maintainer_email': 'jamie.bliss@astro73.com',
     'url': 'http://saltstack.com',
     'classifiers': [
         'Programming Language :: Python',
@@ -37,7 +39,8 @@ setup_kwargs = {
     },
     'entry_points': {
         'console_scripts': [
-            'cumin = cumin.__main__:main'
+            'cumin = cumin.__main__:main',
+            'cumin-run = cumin.__main__:main'
         ]
     },
     'install_requires': [

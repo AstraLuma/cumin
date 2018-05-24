@@ -6,12 +6,21 @@ import json
 import logging
 import argparse
 import time
+import sys
 
 from .client import Client
 from .config import FileCache, Config, load_config_environ, load_config_pepperrc, load_config_tui
 from . import __version__
 
 logger = logging.getLogger('pepper')
+
+
+def _guess_client():
+    cmd = sys.argv[0]
+    if cmd.endswith('-run'):
+        return 'runner'
+    else:
+        return 'local'
 
 
 class PepperCli(object):
@@ -60,7 +69,8 @@ class PepperCli(object):
         )
 
         optgroup.add_argument(
-            '--client', dest='client', default='local',
+            '--client', dest='client', default=_guess_client(),
+            choices=['local', 'local_async', 'local_batch', 'runner', 'wheel'],
             help='specify the salt-api client to use (local, local_async, runner, etc)')
 
         optgroup.add_argument(

@@ -45,7 +45,6 @@ setup_kwargs = {
     },
     'install_requires': [
         'requests',
-        'six',
     ],
     'extras_require': {
         'kerberos': ['requests_kerberos'],

@@ -3,7 +3,7 @@ A low-level API exposing the salt-api HTTP calls fairly directly.
 """
 import json
 import logging
-from six.moves.urllib import parse as urlparse
+import urllib.parse as urlparse
 import posixpath as urlpath
 import requests
 import tarfile

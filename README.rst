@@ -30,7 +30,6 @@ Installation
 Usage
 -----
 
-Basic usage is in heavy flux.
 
 .. code-block:: bash
 
@@ -42,8 +41,8 @@ Examples leveraging the runner client.
 
 .. code-block:: bash
 
-    cumin --client runner reactor.list
-    cumin --client runner reactor.add event='test/provision/*' reactors='/srv/salt/state/reactor/test-provision.sls'
+    cumin-run reactor.list
+    cumin-run reactor.add event='test/provision/*' reactors='/srv/salt/state/reactor/test-provision.sls'
 
 Configuration
 -------------
@@ -58,15 +57,3 @@ or in a configuration file ``$HOME/.pepperrc`` with the following syntax :
   SALTAPI_USER=saltdev
   SALTAPI_PASS=saltdev
   SALTAPI_EAUTH=pam
-
-Contributing
-------------
-
-Please feel free to get involved by sending pull requests or join us on the
-Salt mailing list or on IRC in #salt or #salt-devel.
-
-This repo follows the same `contributing guidelines`__ as Salt and uses
-separate develop and master branches for in-progress additions and bug-fix
-changes respectively.
-
-.. __: https://docs.saltstack.com/en/latest/topics/development/contributing.html

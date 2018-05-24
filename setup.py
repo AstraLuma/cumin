@@ -17,7 +17,7 @@ setup_kwargs = {
     'author_email': 'shouse@saltstack.com',
     'maintainer': 'Jamie Bliss',
     'maintainer_email': 'jamie.bliss@astro73.com',
-    'url': 'http://saltstack.com',
+    'url': 'https://github.com/astronouth7303/cumin',
     'classifiers': [
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
@@ -57,6 +57,10 @@ def versionfile(base_dir):
     return os.path.join(base_dir, 'cumin', 'version.json')
 
 
+def readmefile(base_dir):
+    return os.path.join(base_dir, 'README.rst')
+
+
 def read_version_tag():
     git_dir = os.path.join(os.path.dirname(__file__), '.git')
 
@@ -81,6 +85,11 @@ def read_version_tag():
 def read_version_from_json_file():
     with open(versionfile(os.path.dirname(__file__))) as f:
         return json.load(f)['version']
+
+
+def read_readme():
+    with open(readmefile(os.path.dirname(__file__))) as f:
+        return f.read()
 
 
 def parse_version_tag(tag):
@@ -137,7 +146,8 @@ class PepperSdist(sdist.sdist):
 
 if __name__ == '__main__':
     version, sha = get_version()
+    readme = read_readme()
 
     setup(cmdclass={
         'sdist': PepperSdist,
-    }, version=version, **setup_kwargs)  # git_sha=sha
+    }, version=version, long_description=readme, **setup_kwargs)  # git_sha=sha

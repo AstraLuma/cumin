@@ -8,7 +8,7 @@ import os
 import re
 
 from setuptools import setup
-from distutils.command import sdist, install_data
+from setuptools.command import sdist
 
 setup_kwargs = {
     'name': 'salt-cumin',
@@ -121,7 +121,7 @@ def write_version_file(base_dir):
     ver_path = versionfile(base_dir)
     version, sha = get_version()
 
-    with open(ver_path, 'wb') as f:
+    with open(ver_path, 'wt') as f:
         json.dump({'version': version, 'sha': sha}, f)
 
 
@@ -135,23 +135,9 @@ class PepperSdist(sdist.sdist):
         write_version_file(base_dir)
 
 
-class PepperInstallData(install_data.install_data):
-    '''
-    Write the version.json file to the installation directory
-    '''
-
-    def run(self):
-        install_cmd = self.get_finalized_command('install')
-        install_dir = getattr(install_cmd, 'install_lib')
-        write_version_file(install_dir)
-
-        return install_data.install_data.run(self)
-
-
 if __name__ == '__main__':
     version, sha = get_version()
 
     setup(cmdclass={
         'sdist': PepperSdist,
-        'install_data': PepperInstallData,
-    }, version=version, git_sha=sha, **setup_kwargs)
+    }, version=version, **setup_kwargs)  # git_sha=sha

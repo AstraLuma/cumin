@@ -269,6 +269,8 @@ class PepperCli(object):
 
         # Soooo... it turns out salt-api parses out kwargs for us, sometimes
         if self.options.client in ('local', 'local_async', 'local_batch'):
+            if len(self.options.cmd) < 2:
+                sys.exit("Must give a target and command")
             opts.update({
                 'tgt': self.options.cmd[0],
                 'fun': self.options.cmd[1],
@@ -276,6 +278,8 @@ class PepperCli(object):
                 'tgt_type': self.options.tgt_type,
             })
         else:
+            if len(self.options.cmd) < 1:
+                sys.exit("Must give a command")
             opts.update({
                 'fun': self.options.cmd[0],
                 'arg': self.options.cmd[1:],

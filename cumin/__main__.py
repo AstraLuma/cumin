@@ -24,12 +24,8 @@ def main():
             print(result)
             if exit_code is not None:
                 sys.exit(exit_code)
-    # except PepperException as exc:
-    #     sys.exit('Pepper error: {0}'.format(exc))
-    # except Exception as e:
-    #     logger.debug('Uncaught traceback:', exc_info=True)
-    #     raise
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt:
+        # Silence Ctrl-C while still exiting
         sys.exit()
 
 

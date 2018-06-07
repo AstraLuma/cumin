@@ -295,7 +295,7 @@ class PepperCli(object):
         return opts
 
     def format_response(self, data):
-        return json.dumps(data, indent=4)
+        return json.dumps(data, indent=4, sort_keys=True)
 
     def run(self):
         '''

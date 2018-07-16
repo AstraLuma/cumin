@@ -16,7 +16,8 @@ DEFAULT_SETTINGS = {
     'user': None,
     'password': None,
     'eauth': 'auto',
-    'verify': True
+    'verify': True,
+    'connect_timeout': 15,
 }
 
 
@@ -136,6 +137,7 @@ def load_config_pepperrc(config, filename=None):
         'saltapi_eauth': 'eauth',
         'saltapi_url': 'url',
         'saltapi_ssl_verify': 'verify',
+        'saltapi_timeout': 'connect_timeout',
     }
 
     if not filename:
@@ -160,6 +162,7 @@ def load_config_environ(config, environ=None):
         'SALTAPI_EAUTH': 'eauth',
         'SALTAPI_URL': 'url',
         'SALTAPI_SSL_VERIFY': 'verify',
+        'SALTAPI_TIMEOUT': 'connect_timeout',
         'PEPPERCACHE': 'cache',
     }
 

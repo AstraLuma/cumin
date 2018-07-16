@@ -21,7 +21,12 @@ class Client:
         """
         self.config = config or standard_configuration()
         self.cache = cache or NullCache(self.config)
-        self.api = SaltApi(api_url or self.config['url'], cache=self.cache, ssl_verify=self.config['verify'])
+        self.api = SaltApi(
+            api_url or self.config['url'],
+            cache=self.cache,
+            ssl_verify=self.config['verify'],
+            connect_timeout=self.config['connect_timeout'],
+        )
 
         if auto_login and self.config['user'] and not self.api.auth:
             self.login(self.config['user'], self.config['password'], self.config['eauth'])

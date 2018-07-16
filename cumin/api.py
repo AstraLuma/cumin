@@ -70,7 +70,7 @@ class SaltApi(object):
 
     '''
 
-    def __init__(self, api_url, *, cache=None, ssl_verify=False):
+    def __init__(self, api_url, *, cache=None, ssl_verify=False, connect_timeout=None):
         '''
         Initialize the class with the URL of the API
 
@@ -93,6 +93,7 @@ class SaltApi(object):
 
         self.api_url = api_url
         self._ssl_verify = ssl_verify
+        self.connect_timeout = connect_timeout
         self.auth = self.authcache.get_auth() or {}
         self.session = requests.Session()
 
@@ -147,6 +148,7 @@ class SaltApi(object):
             verify=self._ssl_verify,
             auth=auth,
             data=json.dumps(data),
+            timeout=(self.connect_timeout, None),
             **kwargs
         )
         if resp.status_code == 401:

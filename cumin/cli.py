@@ -71,14 +71,14 @@ class PepperCli(object):
         optgroup.add_argument(
             '--client', dest='client', default=_guess_client(),
             choices=['local', 'local_async', 'local_batch', 'runner', 'wheel'],
-            help='specify the salt-api client to use (local, local_async, runner, etc)')
+            help='specify the salt-api client to use')
 
         optgroup.add_argument(
             '--json', dest='json_input',
-            help='Enter JSON at the CLI instead of positional (text) arguments. This '
-            'is useful for arguments that need complex data structures. '
-            'Specifying this argument will cause positional arguments to be '
-            'ignored.',
+            help='Enter raw "lowstate" JSON on standard input instead of command '
+            'arguments. This is useful for arguments that need complex data '
+            'structures. Specifying this argument will cause command arguments '
+            'to be ignored.',
         )
 
         optgroup.add_argument(
@@ -107,21 +107,21 @@ class PepperCli(object):
         '''
         optgroup = self.parser.add_argument_group(
             "Targeting Options",
-            "Target which minions to run commands on"
+            "Target which minions to run commands on, see https://docs.saltstack.com/en/latest/topics/targeting/index.html"
         )
 
         optgroup.set_defaults(tgt_type='glob')
 
         optgroup.add_argument(
             '-E', '--pcre', dest='tgt_type', action='store_const', const='pcre',
-            help="Instead of using shell globs to evaluate the target servers, "
+            help="Instead of using shell globs to evaluate the target minions, "
             "use pcre regular expressions."
         )
 
         optgroup.add_argument(
             '-L', '--list', dest='tgt_type', action='store_const', const='list',
-            help="Instead of using shell globs to evaluate the target servers, "
-            "take a comma or space delimited list of servers."
+            help="Instead of using shell globs to evaluate the target minions, "
+            "take a comma or space delimited list of minions."
         )
 
         optgroup.add_argument(

@@ -65,7 +65,7 @@ class PepperCli(object):
 
         optgroup.add_argument(
             '-t', '--timeout', dest='timeout', type=int, default=60,
-            help='Specify wait time (in seconds) before returning control to the shell',
+            help='Specify time (in seconds) to wait for the jobs to finish',
         )
 
         optgroup.add_argument(

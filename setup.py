@@ -16,8 +16,8 @@ setup_kwargs = {
     'author': 'Seth House',
     'author_email': 'shouse@saltstack.com',
     'maintainer': 'Jamie Bliss',
-    'maintainer_email': 'jamie.bliss@astro73.com',
-    'url': 'https://github.com/astronouth7303/cumin',
+    'maintainer_email': 'jamie@ivyleav.es',
+    'url': 'https://github.com/AstraLuma/cumin',
     'classifiers': [
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',

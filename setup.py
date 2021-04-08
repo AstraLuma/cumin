@@ -49,6 +49,7 @@ setup_kwargs = {
     'extras_require': {
         'kerberos': ['requests_kerberos'],
     },
+    'keywords': 'salt saltstack salt-extension'
 }
 
 
